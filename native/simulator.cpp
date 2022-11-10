@@ -475,7 +475,7 @@ Result<void> writeSimulatorStateToVizFile(Simulator& simulator, std::string file
 
 		*(alias.asFloat++) = size.x;
 		*(alias.asFloat++) = size.y;
-		*(alias.asUInt++) = 0xFF0000FF;//simulator.cpuState.colors[i];
+		*(alias.asUInt++) = 0x000000FF;//simulator.cpuState.colors[i];
 	}
 
 	for (uint32_t i = 0; i < simulator.cellCount; ++i)
