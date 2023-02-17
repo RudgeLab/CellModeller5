@@ -106,6 +106,10 @@ if (NOT CELLMODELLER_ARTIFACT_SUFFIX)
 	set(CELLMODELLER_ARTIFACT_SUFFIX ".pyd")
 endif()
 
+if(MSVC)
+	add_definitions(/MP)
+endif()
+
 # Just so we don't have to type the whole name every time
 set(MODULE_NAME ${CELLMODELLER_PYTHON_MODULE_NAME})
 
