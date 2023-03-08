@@ -55,7 +55,7 @@ class CMakeBuild(build_ext):
 setup(
 	name="cellmodeller5",
 	version="1.0",
-	packages=[ "cellmodeller5" ],
+	packages=[ "cellmodeller5", "cellmodeller5.shaders" ],
 	package_dir={ "cellmodeller5": "cellmodeller5", },
 	package_data={
 		"cellmodeller5": ["shaders/*.glsl"],
