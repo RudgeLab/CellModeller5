@@ -5,6 +5,7 @@
 
 #include "zlib.h"
 
+#include <cmath>
 #include <fstream>
 #include <iostream>
 
@@ -387,7 +388,7 @@ Result<void> writeSimulatorStateToStepFile(Simulator& simulator, std::string fil
 
 vec3 directionFromAngles(vec2 rotation)
 {
-	return { sin(rotation.y), cos(rotation.x), cos(rotation.y) };
+	return { sinf(rotation.y), cosf(rotation.x), cosf(rotation.y) };
 }
 
 Result<void> compressToFile(uint8_t* inputBuffer, uint32_t inputSize, int level, std::string filepath)

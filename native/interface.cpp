@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <iostream>
+#include <stdexcept>
 
 #include "shader_compiler.h"
 #include "simulator.h"
@@ -57,7 +58,7 @@ PYBIND11_MODULE(CM_MODULE_NAME, m) {
 	// Initialize the shader compiler
 	if (!startupShaderCompiler())
 	{
-		throw std::exception("Failed to initialize shader compiler");
+		throw std::runtime_error("Failed to initialize shader compiler");
 	}
 
 	//terminateShaderCompiler();
