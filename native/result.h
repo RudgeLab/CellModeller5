@@ -24,16 +24,16 @@ template<typename T>
 class Result : public std::variant<ErrorMessage, T>
 {
 public:
-	Result(const T& value) : variant(value) {}
-	Result(const ErrorMessage& msg) : variant(msg) {}
+	Result(const T& value) : variant<ErrorMessage, T>(value) {}
+	Result(const ErrorMessage& msg) : variant<ErrorMessage, T>(msg) {}
 };
 
 template<>
 class Result<void> : public std::variant<ErrorMessage, std::monostate>
 {
 public:
-	Result() : variant(std::monostate{}) {}
-	Result(const ErrorMessage& msg) : variant(msg) {}
+	Result() : variant<ErrorMessage, std::monostate>(std::monostate{}) {}
+	Result(const ErrorMessage& msg) : variant<ErrorMessage, std::monostate>(msg) {}
 };
 
 #define CM_ERROR_MESSAGE(msg) ErrorMessage{ std::string(msg) }

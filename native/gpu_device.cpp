@@ -3,8 +3,8 @@
 #include "renderdoc/renderdoc_app.h"
 
 #include <string>
+#include <cstring>
 #include <vector>
-#include <cassert>
 #include <sstream>
 
 static int minSeverity = 2;
@@ -52,9 +52,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugUtilsCallback(VkDebugUtilsMessa
 		}
 		break;
 	}
-
-	//Throw error
-	assert(messageSeverity != VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT);
 
 	return VK_FALSE;
 }
