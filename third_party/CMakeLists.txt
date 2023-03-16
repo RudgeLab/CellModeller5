@@ -117,7 +117,11 @@ string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
     "\\1" ZLIB_FULL_VERSION ${_zlib_h_contents})
 
 add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+
 target_include_directories(zlibstatic PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${ZLIB_CURRENT_SOURCE_DIR})
+
+# Not sure why, but when compiling with GCC on linux, zlib won't link without PIC enabled
+set_property(TARGET zlibstatic PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if(UNIX)
     # On unix-like platforms the library is almost always called libz
