@@ -28,6 +28,7 @@ class CMakeBuild(build_ext):
 		cfg = "Debug" if self.debug else "Release"
 
 		cmake_args = [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
+                      f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}",
 					  f"-DCMAKE_BUILD_TYPE={cfg}",
 					  f"-DPYTHON_EXECUTABLE={sys.executable}",
 					  f"-DCELLMODELLER_ARTIFACT_NAME={extname}",
@@ -35,12 +36,9 @@ class CMakeBuild(build_ext):
 		]
 		build_args = [ "--config", cfg ]
 
-		if platform.system() == "Windows":
-			cmake_args += [ f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}" ]
-
-			# Note: I don't think this is just a Windows-specific option
-			if sys.maxsize > 2**32:
-				cmake_args += [ "-A", "x64" ]
+        # Note: I don't think this is just a Windows-specific option
+        if platform.system() == "Windows" and sys.maxsize > 2**32:
+            cmake_args += [ "-A", "x64" ]
 
 		env = os.environ.copy()
 #		env["CXXFLAGS"] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
