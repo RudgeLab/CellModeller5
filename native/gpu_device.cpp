@@ -51,6 +51,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugUtilsCallback(VkDebugUtilsMessa
 			printf("VulkanDebugCallback:\n %s\n", pCallbackData->pMessage);
 		}
 		break;
+	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT:
+		//Adding this as a case just to make GCC happy
+		break;
 	}
 
 	return VK_FALSE;
@@ -142,6 +145,11 @@ Result<void> initGPUContext(GPUContext* context, bool withDebug)
 		instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
 
+#ifdef CM_VULKAN_COMPAT
+	instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+	instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME),
+#endif
+
 	queryInstanceExtensions(instanceExtensions);
 
 	//Create instance
@@ -169,6 +177,9 @@ Result<void> initGPUContext(GPUContext* context, bool withDebug)
 	instanceCI.ppEnabledExtensionNames = instanceExtensions.data();
 	instanceCI.enabledLayerCount = (uint32_t)enabledLayers.size();
 	instanceCI.ppEnabledLayerNames = withDebug ? enabledLayers.data() : nullptr;
+#ifdef CM_VULKAN_COMPAT
+	instanceCI.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
 
 	VK_THROW(vkCreateInstance(&instanceCI, nullptr, &context->instance));
 
@@ -194,6 +205,8 @@ void deinitGPUContext(GPUContext& context)
 
 Result<void> initGPUDevice(GPUDevice* device, GPUContext& context)
 {
+	device->compatibilityMode = false;
+
 	//Select physical device
 	uint32_t physicalDeviceCount = 0;
 	VK_THROW(vkEnumeratePhysicalDevices(context.instance, &physicalDeviceCount, nullptr));
@@ -259,6 +272,28 @@ Result<void> initGPUDevice(GPUDevice* device, GPUContext& context)
 	device->queueProperties = queueProperties[selectedQueue];
 	device->queueFamilyIndex = selectedQueue;
 
+	//Look for extensions
+	uint32_t extensionCount = 0;
+	VK_THROW(vkEnumerateDeviceExtensionProperties(device->physicalDevice, nullptr, &extensionCount, nullptr));
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	VK_THROW(vkEnumerateDeviceExtensionProperties(device->physicalDevice, nullptr, &extensionCount, availableExtensions.data()));
+
+	for (uint32_t i = 0; i < extensionCount; i++)
+	{
+		if (!strcmp(availableExtensions[i].extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
+		{
+			device->compatibilityMode = true;
+		}
+	}
+
+	std::vector<const char*> enabledExtensions;
+
+	if (device->compatibilityMode)
+	{
+		enabledExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+	}
+
 	//Create device
 	float queuePriority = 1.0;
 
@@ -274,8 +309,8 @@ Result<void> initGPUDevice(GPUDevice* device, GPUContext& context)
 	deviceCI.pQueueCreateInfos = &queueCI;
 	deviceCI.enabledLayerCount = 0;
 	deviceCI.ppEnabledLayerNames = nullptr;
-	deviceCI.enabledExtensionCount = 0;
-	deviceCI.ppEnabledExtensionNames = nullptr;
+	deviceCI.enabledExtensionCount = (uint32_t)enabledExtensions.size();
+	deviceCI.ppEnabledExtensionNames = enabledExtensions.data();
 	deviceCI.pEnabledFeatures = nullptr;
 	
 	VK_THROW(vkCreateDevice(device->physicalDevice, &deviceCI, nullptr, &device->device));

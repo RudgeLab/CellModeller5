@@ -53,6 +53,12 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 	const VkPhysicalDeviceProperties& properties = simulator->gpuDevice.properties;
 
 	printf("Vulkan Device:\n");
+
+	if (simulator->gpuDevice.compatibilityMode)
+	{
+		printf("    (Compatibility Mode)\n");
+	}
+
 	printf("    Name:  %s\n", properties.deviceName);
 	printf("    API Version: %d.%d.%d\n", VK_API_VERSION_MAJOR(properties.apiVersion),
 										  VK_API_VERSION_MINOR(properties.apiVersion),

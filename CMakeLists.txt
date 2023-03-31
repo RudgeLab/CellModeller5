@@ -12,6 +12,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
+if(APPLE)
+	set(USE_VULKAN_COMPAT_MODE ON)
+else()
+	set(USE_VULKAN_COMPAT_MODE OFF)
+endif()
+
 ############ Setup Vulkan-Headers ############
 set(VK_HEADERS_INCLUDE "${PROJECT_SOURCE_DIR}/third_party/Vulkan-Headers/include")
 
@@ -25,6 +31,10 @@ add_library(volk ${VOLK_ROOT}/volk.h ${VOLK_ROOT}/volk.c)
 
 target_include_directories(volk PUBLIC ${VOLK_ROOT}/)
 target_link_libraries(volk Vulkan-Headers)
+
+if(USE_VULKAN_COMPAT_MODE)
+	target_compile_definitions(volk PUBLIC VK_ENABLE_BETA_EXTENSIONS)
+endif()
 
 # set_target_properties(volk PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -89,6 +99,10 @@ target_include_directories(${MODULE_NAME} PUBLIC src)
 
 target_compile_definitions(${MODULE_NAME} PRIVATE ${GLOBAL_DEFINES})
 target_compile_definitions(${MODULE_NAME} PRIVATE CM_MODULE_NAME=${MODULE_NAME})
+
+if(USE_VULKAN_COMPAT_MODE)
+	target_compile_definitions(${MODULE_NAME} PRIVATE CM_VULKAN_COMPAT=1)
+endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${CELLMODELLER_ARTIFACT_NAME})
 set_target_properties(${MODULE_NAME} PROPERTIES SUFFIX ${CELLMODELLER_ARTIFACT_SUFFIX})

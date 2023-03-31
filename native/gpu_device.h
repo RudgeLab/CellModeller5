@@ -35,6 +35,8 @@ struct GPUDevice
 
 	VkQueueFamilyProperties queueProperties = {};
 	uint32_t queueFamilyIndex = 0xFFFFFFFFu;
+
+	bool compatibilityMode = false;
 };
 
 struct ShaderPipeline
