@@ -3,9 +3,38 @@ import sys
 import platform
 import subprocess
 
+import setuptools
 from setuptools import setup, find_packages, Extension
+from setuptools.command.develop import develop
 from setuptools.command.build_ext import build_ext
+
 from distutils.version import LooseVersion
+from distutils import log
+
+class DevelopDebugPackage(develop):
+	def install_for_development(self):
+		self.run_command('egg_info')
+
+		# Build extensions in-place
+		command = self.reinitialize_command('build_ext', inplace=1)
+		command.debug = True
+
+		self.run_command('build_ext')
+
+		if setuptools.bootstrap_install_from:
+			self.easy_install(setuptools.bootstrap_install_from)
+			setuptools.bootstrap_install_from = None
+
+		self.install_namespaces()
+
+		# create an .egg-link in the installation dir, pointing to our egg
+		log.info("Creating %s (link to %s)", self.egg_link, self.egg_base)
+		if not self.dry_run:
+			with open(self.egg_link, "w") as f:
+				f.write(self.egg_path + "\n" + self.setup_path)
+		# postprocess the installed distro, fixing up .pth, installing scripts,
+		# and handling requirements
+		self.process_distribution(None, self.dist, not self.no_deps)
 
 class CMakeExtension(Extension):
 	def __init__(self, name, sourcedir=''):
@@ -61,6 +90,9 @@ setup(
 	include_package_data=True,
 	install_requires=[ "numpy" ],
 	ext_modules=[ CMakeExtension("cellmodeller5.native") ],
-	cmdclass={ "build_ext": CMakeBuild },
+	cmdclass={
+		"build_ext": CMakeBuild,
+		"develop_debug": DevelopDebugPackage,
+	},
 	zip_safe=True,
 )

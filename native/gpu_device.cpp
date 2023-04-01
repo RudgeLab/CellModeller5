@@ -281,17 +281,21 @@ Result<void> initGPUDevice(GPUDevice* device, GPUContext& context)
 
 	for (uint32_t i = 0; i < extensionCount; i++)
 	{
+#ifdef VK_KHR_portability_subset
 		if (!strcmp(availableExtensions[i].extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
 		{
 			device->compatibilityMode = true;
 		}
+#endif
 	}
 
 	std::vector<const char*> enabledExtensions;
 
 	if (device->compatibilityMode)
 	{
+#ifdef VK_KHR_portability_subset
 		enabledExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+#endif
 	}
 
 	//Create device
