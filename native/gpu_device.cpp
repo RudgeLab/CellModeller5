@@ -59,7 +59,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugUtilsCallback(VkDebugUtilsMessa
 	return VK_FALSE;
 }
 
-void queryValidationLayers(const std::vector<const char*>& validationLayers, std::vector<const char*>& enabledLayers)
+static void queryValidationLayers(const std::vector<const char*>& validationLayers, std::vector<const char*>& enabledLayers)
 {
 	uint32_t availableLayerCount = 0;
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&availableLayerCount, nullptr));
@@ -86,12 +86,12 @@ void queryValidationLayers(const std::vector<const char*>& validationLayers, std
 
 		if (!found)
 		{
-			//TODO: Maybe print a warning
+			printf("Could not find validation layer %s; it will no be enabled.\n", validationLayers[i]);
 		}
 	}
 }
 
-void queryInstanceExtensions(const std::vector<const char*>& instanceExtensions)
+static Result<void> queryInstanceExtensions(const std::vector<const char*>& instanceExtensions)
 {
 	uint32_t availableExtensionCount = 0;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr));
@@ -116,9 +116,43 @@ void queryInstanceExtensions(const std::vector<const char*>& instanceExtensions)
 
 		if (!found)
 		{
-			//Throw error
+			CM_ERROR_MESSAGE(std::string("Could not find instance extension: ") + instanceExtensions[i]);
 		}
 	}
+
+	return Result<void>();
+}
+
+static Result<void> queryDeviceExtensions(VkPhysicalDevice device, const std::vector<const char*>& deviceExtensions)
+{
+	uint32_t availableExtensionCount = 0;
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(device, nullptr, &availableExtensionCount, nullptr));
+
+	std::vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(device, nullptr, &availableExtensionCount, availableExtensions.data()));
+
+	for (size_t i = 0; i < deviceExtensions.size(); ++i)
+	{
+		bool found = false;
+
+		for (size_t j = 0; j < availableExtensions.size(); ++j)
+		{
+			const char* extensionName = availableExtensions[j].extensionName;
+
+			if (strncmp(deviceExtensions[i], extensionName, VK_MAX_EXTENSION_NAME_SIZE) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			CM_ERROR_MESSAGE(std::string("Could not find device extension: ") + deviceExtensions[i]);
+		}
+	}
+
+	return Result<void>();
 }
 
 Result<void> initGPUContext(GPUContext* context, bool withDebug)
@@ -129,8 +163,13 @@ Result<void> initGPUContext(GPUContext* context, bool withDebug)
 	}
 
 	//Check for validation layer support
-	std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
+	std::vector<const char*> validationLayers;
 	std::vector<const char*> enabledLayers;
+
+	if (withDebug)
+	{
+		validationLayers.push_back("VK_LAYER_KHRONOS_validation");
+	}
 
 	if (withDebug)
 	{
@@ -150,7 +189,7 @@ Result<void> initGPUContext(GPUContext* context, bool withDebug)
 	instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME),
 #endif
 
-	queryInstanceExtensions(instanceExtensions);
+	CM_PROPAGATE_ERROR(queryInstanceExtensions(instanceExtensions));
 
 	//Create instance
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo = {};
@@ -163,10 +202,10 @@ Result<void> initGPUContext(GPUContext* context, bool withDebug)
 
 	VkApplicationInfo applicationInfo = {};
 	applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	applicationInfo.pApplicationName = "Cell Modeller";
+	applicationInfo.pApplicationName = "Cell Modeller 5";
 	applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-	applicationInfo.pEngineName = "Cell Modeller Engine";
-	applicationInfo.engineVersion = VK_MAKE_VERSION(5, 0, 0);
+	applicationInfo.pEngineName = "Cell Modeller 5 Engine";
+	applicationInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	applicationInfo.apiVersion = VK_API_VERSION_1_0;
 
 	VkInstanceCreateInfo instanceCI = {};
@@ -282,7 +321,7 @@ Result<void> initGPUDevice(GPUDevice* device, GPUContext& context)
 	for (uint32_t i = 0; i < extensionCount; i++)
 	{
 #ifdef VK_KHR_portability_subset
-		if (!strcmp(availableExtensions[i].extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
+		if (!strncmp(availableExtensions[i].extensionName, VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, VK_MAX_EXTENSION_NAME_SIZE))
 		{
 			device->compatibilityMode = true;
 		}
@@ -297,6 +336,8 @@ Result<void> initGPUDevice(GPUDevice* device, GPUContext& context)
 		enabledExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
 #endif
 	}
+
+	CM_PROPAGATE_ERROR(queryDeviceExtensions(device->physicalDevice, enabledExtensions));
 
 	//Create device
 	float queuePriority = 1.0;

@@ -101,7 +101,10 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 	simulator->compressionLevel = 2;
 
 	//Initialize frame capture
-	initFrameCapture();
+	if (withDebug)
+	{
+		initFrameCapture();
+	}
 
 	return Result<void>();
 }
