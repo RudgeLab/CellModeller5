@@ -12,12 +12,25 @@ from distutils.version import LooseVersion
 from distutils import log
 
 class DevelopDebugPackage(develop):
+	user_options = develop.user_options + [
+		("debug", None, "Compile in debug mode"),
+		("dbg-dialog", None, "Display a debug dialog when the module is loaded (Development only!) "),
+	]
+
+	boolean_options = develop.boolean_options + [ "debug", "dbg-dialog" ]
+
+	def initialize_options(self):
+		self.debug = False
+		self.dbg_dialog = False
+		develop.initialize_options(self)
+
 	def install_for_development(self):
 		self.run_command('egg_info')
 
 		# Build extensions in-place
 		command = self.reinitialize_command('build_ext', inplace=1)
-		command.debug = True
+		command.debug = self.debug
+		command.show_dialog = self.dbg_dialog
 
 		self.run_command('build_ext')
 
@@ -55,6 +68,7 @@ class CMakeBuild(build_ext):
 		extsuffix = "." + extnametokens[-1]
 
 		cfg = "Debug" if self.debug else "Release"
+		dialog_opt = "ON" if self.show_dialog else "OFF"
 
 		cmake_args = [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
 					  f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}",
@@ -62,16 +76,16 @@ class CMakeBuild(build_ext):
 					  f"-DPYTHON_EXECUTABLE={sys.executable}",
 					  f"-DCELLMODELLER_ARTIFACT_NAME={extname}",
 					  f"-DCELLMODELLER_ARTIFACT_SUFFIX={extsuffix}",
+					  f"-DCM5_WITH_DEBUG_DIALOG={dialog_opt}",
 		]
 		build_args = [ "--config", cfg ]
 
-		# Note: I don't think this is just a Windows-specific option
 		if platform.system() == "Windows" and sys.maxsize > 2**32:
+			# Note: I don't think this is just a Windows-specific option
 			cmake_args += [ "-A", "x64" ]
 
 		env = os.environ.copy()
-#		env["CXXFLAGS"] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
-#								self.distribution.get_version())
+#		env["CXXFLAGS"] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''), self.distribution.get_version())
 
 		if not os.path.exists(self.build_temp):
 			os.makedirs(self.build_temp)

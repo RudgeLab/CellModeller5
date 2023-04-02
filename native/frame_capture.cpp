@@ -1,18 +1,17 @@
 #include "frame_capture.h"
 
 #include "renderdoc/renderdoc_app.h"
+#include "platform.h"
 
 #include <iostream>
 
-#if defined(WIN32) || defined(__WIN32__) || defined(_WIN32) || defined(_MSC_VER)
+#if defined(CM5_PLATFORM_WINDOWS)
 #include <Windows.h>
-#define CM5_PLATFORM_WINDOWS
-#elif defined(__linux__)
+#elif defined(CM5_PLATFORM_LINUX)
 #include <dlfcn.h>
-#define CM5_PLATFORM_LINUX
-#elif defined(__APPLE__)
+#define 
+#elif defined(CM5_PLATFORM_MACOS)
 #include <dlfcn.h>
-#define CM5_PLATFORM_MACOS
 #endif
 
 static RENDERDOC_API_1_1_2* g_renderDocApi = nullptr;

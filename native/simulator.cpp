@@ -73,16 +73,16 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 
 	CM_PROPAGATE_ERROR(mapGPUState(*simulator));
 
-#if 0
-	/*for (int i = 0; i < 11; ++i)
+#if 1
+	simulator->cellCount = 11;
+
+	for (int i = 0; i < simulator->cellCount; i++)
 	{
 		simulator->cpuState.positions[i] = { 0.f, 5.0f, 3.5f * (5 - i) }; //{ 0.f, 0.0f, 2.6f * (5 - i) }
-		simulator->cpuState.rotations[i] = { 3.14159265359f / 2.0f, 0.0f };
+		simulator->cpuState.rotations[i] = { 0.0f, 0.0f };
+		simulator->cpuState.velocities[i] = { 0.0f, -2.0f, 0.0f };
 		simulator->cpuState.sizes[i] = { 0.0f, 0.5f };
-		//simulator->cpuState.colors[i] = 0xFF0000FF;
 	}
-
-	simulator->cellCount = 11;*/
 #else
 	simulator->cpuState.positions[0] = { 0.f, 2.0f, 0.0f };
 	simulator->cpuState.rotations[0] = { 0.0f, 0.0f };
@@ -99,12 +99,6 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 
 	simulator->uploadStateOnNextStep = true;
 	simulator->compressionLevel = 2;
-
-	//Initialize frame capture
-	if (withDebug)
-	{
-		initFrameCapture();
-	}
 
 	return Result<void>();
 }
@@ -247,7 +241,8 @@ static void updateStateSet(Simulator& simulator, Simulator::GPUState& state, VkD
 Result<void> stepSimulator(Simulator& simulator)
 {
 	//This is used to automatically start/stop frame capture
-	FrameCaptureScope frameCapture;
+	FrameCaptureScope frameCapture(!simulator.hasCapturedFrame);
+	simulator.hasCapturedFrame = true;
 
 	GPUDevice& device = simulator.gpuDevice;
 
@@ -485,7 +480,7 @@ Result<void> writeSimulatorStateToVizFile(Simulator& simulator, std::string file
 
 		*(alias.asFloat++) = size.x;
 		*(alias.asFloat++) = size.y;
-		*(alias.asUInt++) = 0x000000FF;//simulator.cpuState.colors[i];
+		*(alias.asUInt++) = 0x000000FF; //simulator.cpuState.colors[i];
 	}
 
 	for (uint32_t i = 0; i < simulator.cellCount; ++i)

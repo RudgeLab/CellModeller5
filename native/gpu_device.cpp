@@ -1,6 +1,7 @@
 #include "gpu_device.h"
 
-#include "renderdoc/renderdoc_app.h"
+#include "frame_capture.h"
+#include "platform.h"
 
 #include <string>
 #include <cstring>
@@ -157,6 +158,16 @@ static Result<void> queryDeviceExtensions(VkPhysicalDevice device, const std::ve
 
 Result<void> initGPUContext(GPUContext* context, bool withDebug)
 {
+#ifdef CM5_DEBUG
+	//Initialize frame capture. This needs to be done BEFORE the instance
+	//is created (and maybe even before the API functions are loaded).
+	if (withDebug)
+	{
+		initFrameCapture();
+	}
+#endif
+
+	//Load the Vulkan libraries
 	if (!VK_CHECK_SAFE(volkInitialize()))
 	{
 		return CM_ERROR_MESSAGE("Could not find Vulkan libraries");

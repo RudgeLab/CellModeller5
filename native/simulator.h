@@ -8,7 +8,7 @@
 #include <string>
 #include <functional>
 
-struct vec3 { float x; float y; float z; float padding0; };
+struct vec3 { float x; float y; float z; };
 struct vec2 { float x; float y; };
 
 struct Simulator
@@ -21,6 +21,8 @@ struct Simulator
 		/* length, radius */
 		vec2* sizes = nullptr;
 		vec3* velocities = nullptr;
+
+		/* (A << 24) | (B << 16) | (G << 8) | R */
 		uint32_t* colors = nullptr;
 	};
 
@@ -30,6 +32,7 @@ struct Simulator
 		GPUBuffer rotations = {};
 		GPUBuffer sizes = {};
 		GPUBuffer velocities = {};
+		GPUBuffer colors = {};
 	};
 
 	/********* GPU stuff *********/
@@ -66,6 +69,7 @@ struct Simulator
 	std::function<void()> queueWaitEnd = nullptr;
 
 	int compressionLevel = 2;
+	bool hasCapturedFrame = false;
 };
 
 typedef std::function<std::string(const std::string&)> ShaderImportCallback;

@@ -9,11 +9,13 @@ void endFrameCapture();
 
 class FrameCaptureScope
 {
+private:
+	bool capture = false;
 public:
-	FrameCaptureScope() { beginFrameCapture(); }
+	FrameCaptureScope(bool shouldCapture) : capture(shouldCapture) { if (capture) beginFrameCapture(); }
 	FrameCaptureScope(const FrameCaptureScope&) = delete;
 	FrameCaptureScope(FrameCaptureScope&&) = delete;
-	~FrameCaptureScope() { endFrameCapture(); }
+	~FrameCaptureScope() { if (capture) endFrameCapture(); }
 
 	FrameCaptureScope& operator=(const FrameCaptureScope&) = delete;
 	FrameCaptureScope& operator=(FrameCaptureScope&&) = delete;

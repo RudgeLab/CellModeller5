@@ -9,6 +9,30 @@
 #error A module name must be provided!
 #endif
 
+#ifdef CM5_WITH_DEBUG_DIALOG
+#ifdef WIN32
+#include <Windows.h>
+
+void handleDebugBehavior()
+{
+	DWORD pid = GetCurrentProcessId();
+	std::string message = "Wait for debugger to attach? (PID: " + std::to_string(pid) + ")";
+
+	DWORD action = MessageBoxA(NULL, message.c_str(), "CM5 Debugging", MB_YESNO | MB_SYSTEMMODAL);
+	if (action != IDYES) return;
+
+	std::cout << "Waiting for debugger (PID: " << pid << ")\n";
+	while (!IsDebuggerPresent()) Sleep(200);
+	std::cout << "Debugger detected\n";
+}
+#else
+void handleDebugBehavior()
+{
+	//Do nothing
+}
+#endif
+#endif
+
 namespace py = pybind11;
 
 class SimulatorInterface
@@ -55,6 +79,12 @@ public:
 };
 
 PYBIND11_MODULE(CM_MODULE_NAME, m) {
+
+#ifdef CM5_WITH_DEBUG_DIALOG
+	//Wait for a debugger to attach to the current process
+	handleDebugBehavior();
+#endif
+
 	// Initialize the shader compiler
 	if (!startupShaderCompiler())
 	{
