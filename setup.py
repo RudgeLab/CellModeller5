@@ -55,6 +55,11 @@ class CMakeExtension(Extension):
 		self.sourcedir = os.path.abspath(sourcedir)
 
 class CMakeBuild(build_ext):
+	def __init__(self, dist):
+		self.debug = False
+		self.show_dialog = False
+		super().__init__(dist)
+
 	def run(self):
 		for ext in self.extensions:
 			self.build_extension(ext)

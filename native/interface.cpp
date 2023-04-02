@@ -21,9 +21,14 @@ void handleDebugBehavior()
 	DWORD action = MessageBoxA(NULL, message.c_str(), "CM5 Debugging", MB_YESNO | MB_SYSTEMMODAL);
 	if (action != IDYES) return;
 
+	int sleepFor = 200;
+	int timeout = (int)(20 * (1000.0f / sleepFor));
+
 	std::cout << "Waiting for debugger (PID: " << pid << ")\n";
-	while (!IsDebuggerPresent()) Sleep(200);
-	std::cout << "Debugger detected\n";
+	for (; timeout >= 0 && !IsDebuggerPresent(); timeout--) Sleep(sleepFor);
+
+	if (timeout < 0) std::cout << "Debugger wait timeout\n";
+	else std::cout << "Debugger detected\n";
 }
 #else
 void handleDebugBehavior()
