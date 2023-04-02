@@ -113,6 +113,9 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 	simulator->uploadStateOnNextStep = true;
 	simulator->compressionLevel = 2;
 
+	simulator->compressionTempSize = 8 * 1024;
+	simulator->compressionTempBuffer = new uint8_t[simulator->compressionTempSize];
+
 	return Result<void>();
 }
 
@@ -186,6 +189,8 @@ static void destroyShaders(Simulator& simulator)
 	}
 
 	destroyShaderPipeline(simulator.gpuDevice, simulator.collisionShader);
+
+	delete[] simulator.compressionTempBuffer;
 }
 
 void deinitSimulator(Simulator& simulator)
@@ -408,7 +413,7 @@ vec3 directionFromAngles(vec2 rotation)
 	return { sinf(rotation.y), cosf(rotation.x), cosf(rotation.y) };
 }
 
-Result<void> compressToFile(uint8_t* inputBuffer, uint32_t inputSize, int level, std::string filepath)
+Result<void> compressToFile(Simulator& simulator, uint8_t* inputBuffer, uint32_t inputSize, int level, std::string filepath)
 {
 	std::ofstream out(filepath, std::ios::binary | std::ios::trunc);
 
@@ -416,8 +421,6 @@ Result<void> compressToFile(uint8_t* inputBuffer, uint32_t inputSize, int level,
 	{
 		CM_ERROR_MESSAGE("Failed to open viz file: " + filepath);
 	}
-
-	uint8_t outBuffer[4096];
 
 	z_stream stream;
 	stream.zalloc = Z_NULL;
@@ -432,17 +435,17 @@ Result<void> compressToFile(uint8_t* inputBuffer, uint32_t inputSize, int level,
 
 	do
 	{
-		stream.avail_out = sizeof(outBuffer);
-		stream.next_out = outBuffer;
+		stream.avail_out = simulator.compressionTempSize;
+		stream.next_out = simulator.compressionTempBuffer;
 
 		ret = deflate(&stream, Z_FINISH);
 		if (ret == Z_STREAM_ERROR) CM_ERROR_MESSAGE("Error occured when compressing buffer");
 
-		int available = sizeof(outBuffer) - stream.avail_out;
+		int available = simulator.compressionTempSize - stream.avail_out;
 
 		try
 		{
-			out.write((const char*)outBuffer, available);
+			out.write((const char*)simulator.compressionTempBuffer, available);
 		}
 		catch (...)
 		{
@@ -469,13 +472,21 @@ Result<void> writeSimulatorStateToVizFile(Simulator& simulator, std::string file
 
 	std::vector<uint8_t> buffer(totalSize);
 
+	struct PackedCell
+	{
+		float posX, posY, posZ;
+		float dirX, dirY, dirZ;
+		float length, radius;
+		uint32_t color;
+	};
+
 	union
 	{
 		uint8_t* asByte;
 
-		float* asFloat;
 		uint32_t* asUInt;
 		uint64_t* asULong;
+		PackedCell* asPackedCell;
 	} alias;
 
 	alias.asByte = buffer.data();
@@ -487,18 +498,18 @@ Result<void> writeSimulatorStateToVizFile(Simulator& simulator, std::string file
 		vec3 dir = directionFromAngles(simulator.cpuState.rotations[i]);
 		vec2 size = simulator.cpuState.sizes[i];
 
-		//TODO: Correct byte order
-		*(alias.asFloat++) = pos.x;
-		*(alias.asFloat++) = pos.y;
-		*(alias.asFloat++) = pos.z;
+		PackedCell cell;
+		cell.posX = pos.x;
+		cell.posY = pos.y;
+		cell.posZ = pos.z;
+		cell.dirX = dir.x;
+		cell.dirY = dir.y;
+		cell.dirZ = dir.z;
+		cell.length = size.x;
+		cell.radius = size.y;
+		cell.color = 0x000000FF;
 
-		*(alias.asFloat++) = dir.x;
-		*(alias.asFloat++) = dir.y;
-		*(alias.asFloat++) = dir.z;
-
-		*(alias.asFloat++) = size.x;
-		*(alias.asFloat++) = size.y;
-		*(alias.asUInt++) = 0x000000FF; //simulator.cpuState.colors[i];
+		alias.asPackedCell[i] = cell;
 	}
 
 	for (uint32_t i = 0; i < simulator.cellCount; ++i)
@@ -510,7 +521,7 @@ Result<void> writeSimulatorStateToVizFile(Simulator& simulator, std::string file
 
 	*(alias.asByte++) = 0;
 
-	CM_PROPAGATE_ERROR(compressToFile(buffer.data(), (uint32_t)buffer.size(), simulator.compressionLevel, filepath));
+	CM_PROPAGATE_ERROR(compressToFile(simulator, buffer.data(), (uint32_t)buffer.size(), simulator.compressionLevel, filepath));
 
 	return Result<void>();
 }
@@ -545,7 +556,7 @@ Result<Simulator::GPUState> allocateNewGPUState(Simulator& simulator, uint32_t s
 	if (onHost)
 	{
 		usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-		memoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		memoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
 	}
 
 	Simulator::GPUState state = {};

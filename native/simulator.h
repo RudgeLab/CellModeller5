@@ -69,6 +69,9 @@ struct Simulator
 	std::function<void()> queueWaitEnd = nullptr;
 
 	int compressionLevel = 2;
+	uint8_t* compressionTempBuffer = nullptr;
+	size_t compressionTempSize = 0;
+
 	bool hasCapturedFrame = false;
 };
 
