@@ -158,14 +158,12 @@ static Result<void> queryDeviceExtensions(VkPhysicalDevice device, const std::ve
 
 Result<void> initGPUContext(GPUContext* context, bool withDebug)
 {
-#ifdef CM5_DEBUG
 	//Initialize frame capture. This needs to be done BEFORE the instance
 	//is created (and maybe even before the API functions are loaded).
 	if (withDebug)
 	{
 		initFrameCapture();
 	}
-#endif
 
 	//Load the Vulkan libraries
 	if (!VK_CHECK_SAFE(volkInitialize()))

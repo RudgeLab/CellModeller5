@@ -104,7 +104,7 @@ if(USE_VULKAN_COMPAT_MODE)
 	target_compile_definitions(${MODULE_NAME} PRIVATE CM_VULKAN_COMPAT=1)
 endif()
 
-if(CM5_WITH_DEBUG_DIALOG)
+if(USE_DEBUG_DIALOG)
 	target_compile_definitions(${MODULE_NAME} PRIVATE CM5_WITH_DEBUG_DIALOG)
 endif()
 

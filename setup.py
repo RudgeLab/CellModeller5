@@ -76,7 +76,7 @@ class CMakeBuild(build_ext):
 					  f"-DPYTHON_EXECUTABLE={sys.executable}",
 					  f"-DCELLMODELLER_ARTIFACT_NAME={extname}",
 					  f"-DCELLMODELLER_ARTIFACT_SUFFIX={extsuffix}",
-					  f"-DCM5_WITH_DEBUG_DIALOG={dialog_opt}",
+					  f"-DUSE_DEBUG_DIALOG={dialog_opt}",
 		]
 		build_args = [ "--config", cfg ]
 
