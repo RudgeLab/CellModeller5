@@ -31,6 +31,7 @@ class DevelopDebugPackage(develop):
 		command = self.reinitialize_command('build_ext', inplace=1)
 		command.debug = self.debug
 		command.show_dialog = self.dbg_dialog
+		command.rel_with_dbg_info = True
 
 		self.run_command('build_ext')
 
@@ -58,6 +59,7 @@ class CMakeBuild(build_ext):
 	def __init__(self, dist):
 		self.debug = False
 		self.show_dialog = False
+		self.rel_with_dbg_info = False
 		super().__init__(dist)
 
 	def run(self):
@@ -72,7 +74,7 @@ class CMakeBuild(build_ext):
 		extname = ".".join(extnametokens[0:-1])
 		extsuffix = "." + extnametokens[-1]
 
-		cfg = "Debug" if self.debug else "Release"
+		cfg = "Debug" if self.debug else ("RelWithDebInfo" if self.rel_with_dbg_info else "Release")
 		dialog_opt = "ON" if self.show_dialog else "OFF"
 
 		cmake_args = [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",

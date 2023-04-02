@@ -65,7 +65,11 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 										  VK_API_VERSION_PATCH(properties.apiVersion));
 
 	//Set the initial state of the simulation
-	simulator->cellCapacity = 1024;
+	int gw = 1000;
+	int gh = 1000;
+
+	simulator->cellCount = gw * gh;
+	simulator->cellCapacity = simulator->cellCount;
 
 	CM_TRY(simulator->cpuStateMemory, allocateNewGPUState(*simulator, simulator->cellCapacity, true));
 	CM_TRY(simulator->gpuStates[0], allocateNewGPUState(*simulator, simulator->cellCapacity, false));
@@ -73,17 +77,26 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 
 	CM_PROPAGATE_ERROR(mapGPUState(*simulator));
 
-#if 1
-	simulator->cellCount = 11;
+	float r = 0.5f;
+	float d = 2.0f * r;
 
-	for (int i = 0; i < simulator->cellCount; i++)
+	float bx = 0.5f * (gw - 1) * d;
+	float by = 0.5f * (gh - 1) * d;
+
+	for (int x = 0; x < gw; x++)
 	{
-		simulator->cpuState.positions[i] = { 0.f, 5.0f, 3.5f * (5 - i) }; //{ 0.f, 0.0f, 2.6f * (5 - i) }
-		simulator->cpuState.rotations[i] = { 0.0f, 0.0f };
-		simulator->cpuState.velocities[i] = { 0.0f, -2.0f, 0.0f };
-		simulator->cpuState.sizes[i] = { 0.0f, 0.5f };
+		for (int y = 0; y < gh; y++)
+		{
+			int i = y * gw + x;
+			
+			simulator->cpuState.positions[i] = { bx - x * d, 5.0f, by - y * d };
+			simulator->cpuState.rotations[i] = { 0.0f, 0.0f };
+			simulator->cpuState.velocities[i] = { 0.0f, -1.0f, 0.0f };
+			simulator->cpuState.sizes[i] = { 0.0f, r };
+		}
 	}
-#else
+
+#if 0
 	simulator->cpuState.positions[0] = { 0.f, 2.0f, 0.0f };
 	simulator->cpuState.rotations[0] = { 0.0f, 0.0f };
 	simulator->cpuState.velocities[0] = { 0.0f, 2.0f, 0.0f };
@@ -447,9 +460,14 @@ Result<void> compressToFile(uint8_t* inputBuffer, uint32_t inputSize, int level,
 
 Result<void> writeSimulatorStateToVizFile(Simulator& simulator, std::string filepath)
 {
-	size_t elemWidth = 8 * sizeof(float) + sizeof(uint32_t);
+	const size_t bytesPerCell = 8 * sizeof(float) + sizeof(uint32_t);
+	size_t totalSize = 
+		/* Header (Cell count) */ sizeof(uint32_t) +
+		/* Cell data */ simulator.cellCount * bytesPerCell + 
+		/* Cell IDs */ simulator.cellCount * sizeof(uint64_t) +
+		/* Has signals */ sizeof(uint8_t);
 
-	std::vector<uint8_t> buffer(sizeof(uint32_t) + simulator.cellCount * elemWidth + simulator.cellCount * sizeof(uint64_t));
+	std::vector<uint8_t> buffer(totalSize);
 
 	union
 	{
@@ -490,7 +508,9 @@ Result<void> writeSimulatorStateToVizFile(Simulator& simulator, std::string file
 		*(alias.asULong++) = i;
 	}
 
-	compressToFile(buffer.data(), (uint32_t)buffer.size(), simulator.compressionLevel, filepath);
+	*(alias.asByte++) = 0;
+
+	CM_PROPAGATE_ERROR(compressToFile(buffer.data(), (uint32_t)buffer.size(), simulator.compressionLevel, filepath));
 
 	return Result<void>();
 }
