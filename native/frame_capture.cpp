@@ -25,7 +25,7 @@ void initFrameCapture()
 		RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)GetProcAddress(mod, "RENDERDOC_GetAPI");
 	}
 #elif defined(CM5_PLATFORM_LINUX) || defined(CM5_PLATFORM_MACOS)
-	if (void* mod = dlopen("librenderdoc.so", RTLD_NOW | RTLD_NOLOAD))
+	if (void* mod = dlopen("librenderdoc.so", RTLD_NOW | RTLD_LOCAL))
 	{
 		RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)dlsym(mod, "RENDERDOC_GetAPI");
 	}
@@ -36,6 +36,11 @@ void initFrameCapture()
 		std::cerr << "Failed to acquire RenderDoc API functions" << std::endl;
 		g_renderDocApi = nullptr;
 	}
+
+	if (g_renderDocApi)
+	{
+		g_renderDocApi->LaunchReplayUI(1, nullptr);
+	}
 }
 
 bool isFrameCaptureSupported()
@@ -45,16 +50,21 @@ bool isFrameCaptureSupported()
 
 void beginFrameCapture()
 {
-	if (g_renderDocApi)
-	{
-		g_renderDocApi->StartFrameCapture(nullptr, nullptr);
-	}
+	if (!g_renderDocApi) return;
+
+	g_renderDocApi->StartFrameCapture(nullptr, nullptr);
 }
 
 void endFrameCapture()
 {
-	if (g_renderDocApi)
-	{
-		g_renderDocApi->EndFrameCapture(nullptr, nullptr);
-	}
+	if (!g_renderDocApi) return;
+
+	g_renderDocApi->EndFrameCapture(nullptr, nullptr);
+}
+
+void launchFrameReplay()
+{
+	if (!g_renderDocApi) return;
+
+	g_renderDocApi->LaunchReplayUI(1, nullptr);
 }

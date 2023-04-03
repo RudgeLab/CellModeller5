@@ -6,6 +6,7 @@ bool isFrameCaptureSupported();
 
 void beginFrameCapture();
 void endFrameCapture();
+void launchFrameReplay();
 
 class FrameCaptureScope
 {
