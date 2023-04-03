@@ -65,11 +65,11 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 										  VK_API_VERSION_PATCH(properties.apiVersion));
 
 	//Set the initial state of the simulation
-	int gw = 1000;
-	int gh = 1000;
+	int gw = 5;
+	int gh = 5;
 
 	simulator->cellCount = gw * gh;
-	simulator->cellCapacity = simulator->cellCount;
+	simulator->cellCapacity = 2 * simulator->cellCount;
 
 	CM_TRY(simulator->cpuStateMemory, allocateNewGPUState(*simulator, simulator->cellCapacity, true));
 	CM_TRY(simulator->gpuStates[0], allocateNewGPUState(*simulator, simulator->cellCapacity, false));
@@ -80,12 +80,20 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 	float r = 0.5f;
 	float d = 2.0f * r;
 
+	for (int i = 0; i < gw * gh; i++)
+	{
+		simulator->cpuState.positions[i] = { i * d, 5.0f, 0.0f };
+		simulator->cpuState.rotations[i] = { 0.0f, 0.0f };
+		simulator->cpuState.velocities[i] = { 0.0f, -1.0f, 0.0f };
+		simulator->cpuState.sizes[i] = { 0.0f, r };
+	}
+
 	float bx = 0.5f * (gw - 1) * d;
 	float by = 0.5f * (gh - 1) * d;
 
-	for (int x = 0; x < gw; x++)
+	for (int y = 0; y < gh; y++)
 	{
-		for (int y = 0; y < gh; y++)
+		for (int x = 0; x < gw; x++)
 		{
 			int i = y * gw + x;
 			
@@ -511,6 +519,8 @@ Result<void> writeSimulatorStateToVizFile(Simulator& simulator, std::string file
 
 		alias.asPackedCell[i] = cell;
 	}
+
+	alias.asPackedCell += simulator.cellCount;
 
 	for (uint32_t i = 0; i < simulator.cellCount; ++i)
 	{
