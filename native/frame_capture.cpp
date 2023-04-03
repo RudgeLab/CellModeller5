@@ -9,7 +9,6 @@
 #include <Windows.h>
 #elif defined(CM5_PLATFORM_LINUX)
 #include <dlfcn.h>
-#define 
 #elif defined(CM5_PLATFORM_MACOS)
 #include <dlfcn.h>
 #endif

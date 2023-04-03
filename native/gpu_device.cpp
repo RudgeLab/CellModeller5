@@ -353,7 +353,7 @@ Result<void> initGPUDevice(GPUDevice* device, GPUContext& context)
 
 	VkDeviceQueueCreateInfo queueCI = {};
 	queueCI.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queueCI.queueFamilyIndex = selectedDevice;
+	queueCI.queueFamilyIndex = selectedQueue;
 	queueCI.queueCount = 1;
 	queueCI.pQueuePriorities = &queuePriority;
 
