@@ -20,7 +20,7 @@ void initFrameCapture()
 	pRENDERDOC_GetAPI RENDERDOC_GetAPI = nullptr;
 
 #if defined(CM5_PLATFORM_WINDOWS)
-	if (HMODULE mod = GetModuleHandleA("renderdoc.dll"))
+	if (HMODULE mod = LoadLibraryA("renderdoc.dll"))
 	{
 		RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)GetProcAddress(mod, "RENDERDOC_GetAPI");
 	}
