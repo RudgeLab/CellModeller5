@@ -17,6 +17,7 @@ layout(set=0, binding=1, std430) buffer InputRotations {
 };
 
 layout(set=0, binding=2, std430) buffer InputSizes {
+	/* x = length, y = radius */
 	vec2[] u_inputSizes;
 };
 

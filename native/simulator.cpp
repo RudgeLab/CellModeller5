@@ -65,6 +65,7 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 										  VK_API_VERSION_PATCH(properties.apiVersion));
 
 	//Set the initial state of the simulation
+#if 1
 	int gw = 5;
 	int gh = 5;
 
@@ -103,16 +104,24 @@ Result<void> initSimulator(Simulator* simulator, bool withDebug)
 			simulator->cpuState.sizes[i] = { 0.0f, r };
 		}
 	}
+#else
+	simulator->cellCount = 2;
+	simulator->cellCapacity = 2 * simulator->cellCount;
 
-#if 0
-	simulator->cpuState.positions[0] = { 0.f, 2.0f, 0.0f };
+	CM_TRY(simulator->cpuStateMemory, allocateNewGPUState(*simulator, simulator->cellCapacity, true));
+	CM_TRY(simulator->gpuStates[0], allocateNewGPUState(*simulator, simulator->cellCapacity, false));
+	CM_TRY(simulator->gpuStates[1], allocateNewGPUState(*simulator, simulator->cellCapacity, false));
+
+	CM_PROPAGATE_ERROR(mapGPUState(*simulator));
+
+	simulator->cpuState.positions[0] = { 5.f, 0.0f, 0.0f };
 	simulator->cpuState.rotations[0] = { 0.0f, 0.0f };
-	simulator->cpuState.velocities[0] = { 0.0f, 2.0f, 0.0f };
+	simulator->cpuState.velocities[0] = { 0.0f, 0.0f, 0.0f };
 	simulator->cpuState.sizes[0] = { 0.0f, 1.0f };
 
-	simulator->cpuState.positions[1] = { 0.f, 8.0f, 0.0f };
+	simulator->cpuState.positions[1] = { -5.f, 0.0f, 0.0f };
 	simulator->cpuState.rotations[1] = { 0.0f, 0.0f };
-	simulator->cpuState.velocities[1] = { 0.0f, -2.0f, 0.0f };
+	simulator->cpuState.velocities[1] = { 0.0f, 0.0f, 0.0f };
 	simulator->cpuState.sizes[1] = { 0.0f, 1.0f };
 
 	simulator->cellCount = 2;

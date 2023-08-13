@@ -53,8 +53,6 @@ public:
 			return py::cast<std::string>(loadShaderCallback(path));
 		};
 
-		//CM_START_RENDERDOC_INSTANCE
-
 #if defined(_DEBUG) || !defined(_NDEBUG)
 		const bool withDebug = true;
 #else
