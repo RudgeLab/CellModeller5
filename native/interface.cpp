@@ -9,7 +9,7 @@
 #error A module name must be provided!
 #endif
 
-#ifdef CM5_WITH_DEBUG_DIALOG
+#ifdef CM_WITH_DEBUG_DIALOG
 #ifdef WIN32
 #include <Windows.h>
 
@@ -53,7 +53,15 @@ public:
 			return py::cast<std::string>(loadShaderCallback(path));
 		};
 
-		CM_TRY_THROW_V(initSimulator(m_simulator, true));
+		//CM_START_RENDERDOC_INSTANCE
+
+#if defined(_DEBUG) || !defined(_NDEBUG)
+		const bool withDebug = true;
+#else
+		const bool withDebug = false;
+#endif
+
+		CM_TRY_THROW_V(initSimulator(m_simulator, withDebug));
 		CM_TRY_THROW_V(importShaders(*m_simulator, importCallback));
 	}
 
@@ -85,7 +93,7 @@ public:
 
 PYBIND11_MODULE(CM_MODULE_NAME, m) {
 
-#ifdef CM5_WITH_DEBUG_DIALOG
+#ifdef CM_WITH_DEBUG_DIALOG
 	//Wait for a debugger to attach to the current process
 	handleDebugBehavior();
 #endif

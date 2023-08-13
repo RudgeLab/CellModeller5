@@ -160,10 +160,9 @@ Result<void> initGPUContext(GPUContext* context, bool withDebug)
 {
 	//Initialize frame capture. This needs to be done BEFORE the instance
 	//is created (and maybe even before the API functions are loaded).
-	if (withDebug)
-	{
+#ifdef CM_WITH_FRAME_CAPTURE
 		initFrameCapture();
-	}
+#endif
 
 	//Load the Vulkan libraries
 	if (!VK_CHECK_SAFE(volkInitialize()))

@@ -105,7 +105,11 @@ if(USE_VULKAN_COMPAT_MODE)
 endif()
 
 if(USE_DEBUG_DIALOG)
-	target_compile_definitions(${MODULE_NAME} PRIVATE CM5_WITH_DEBUG_DIALOG)
+	target_compile_definitions(${MODULE_NAME} PRIVATE CM_WITH_DEBUG_DIALOG)
+endif()
+
+if(USE_RENDERDOC_CAPTURE)
+	target_compile_definitions(${MODULE_NAME} PRIVATE CM_WITH_FRAME_CAPTURE)
 endif()
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${CELLMODELLER_ARTIFACT_NAME})

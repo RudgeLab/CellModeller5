@@ -14,14 +14,16 @@ from distutils import log
 class DevelopDebugPackage(develop):
 	user_options = develop.user_options + [
 		("debug", None, "Compile in debug mode"),
+		("start-renderdoc", None, "Start a renderdoc instance when a new simulator is created"),
 		("dbg-dialog", None, "Display a debug dialog when the module is loaded (Development only!) "),
 	]
 
-	boolean_options = develop.boolean_options + [ "debug", "dbg-dialog" ]
+	boolean_options = develop.boolean_options + [ "debug", "dbg-dialog", "start-renderdoc" ]
 
 	def initialize_options(self):
 		self.debug = False
 		self.dbg_dialog = False
+		self.start_renderdoc = False
 		develop.initialize_options(self)
 
 	def install_for_development(self):
@@ -31,6 +33,7 @@ class DevelopDebugPackage(develop):
 		command = self.reinitialize_command('build_ext', inplace=1)
 		command.debug = self.debug
 		command.show_dialog = self.dbg_dialog
+		command.start_renderdoc = self.start_renderdoc
 		command.rel_with_dbg_info = True
 
 		self.run_command('build_ext')
@@ -59,6 +62,7 @@ class CMakeBuild(build_ext):
 	def __init__(self, dist):
 		self.debug = False
 		self.show_dialog = False
+		self.start_renderdoc = False
 		self.rel_with_dbg_info = False
 		super().__init__(dist)
 
@@ -76,6 +80,7 @@ class CMakeBuild(build_ext):
 
 		cfg = "Debug" if self.debug else ("RelWithDebInfo" if self.rel_with_dbg_info else "Release")
 		dialog_opt = "ON" if self.show_dialog else "OFF"
+		renderdoc_opt = "ON" if self.start_renderdoc else "OFF"
 
 		cmake_args = [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
 					  f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}",
@@ -84,6 +89,7 @@ class CMakeBuild(build_ext):
 					  f"-DCELLMODELLER_ARTIFACT_NAME={extname}",
 					  f"-DCELLMODELLER_ARTIFACT_SUFFIX={extsuffix}",
 					  f"-DUSE_DEBUG_DIALOG={dialog_opt}",
+					  f"-DUSE_RENDERDOC_CAPTURE={renderdoc_opt}",
 		]
 		build_args = [ "--config", cfg ]
 
